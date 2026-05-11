@@ -1,3 +1,40 @@
 # auth-manager
 
 Display and collect authentication data from multi-providers
+
+## Authentication Content Type
+
+The plugin registers `plugin::auth-manager.authentication` for provider identities.
+Current production sync uses provider `supertokens` and stores the SuperTokens user ID
+in `providerUserId`.
+
+Organization context is stored in `metadata.organization` instead of a dedicated
+relation field so future providers can reuse the same model.
+
+The mapped member collection should have a relation to Authentication. In this
+workspace, `api::contact.contact` has `authentications` for that relation while
+the legacy `auths` component remains as a compatibility mirror.
+
+## One-Time Migration
+
+Dry run:
+
+```bash
+node scripts/migrate-contact-auths-to-auth-manager.mjs
+```
+
+Apply:
+
+```bash
+APPLY=true node scripts/migrate-contact-auths-to-auth-manager.mjs
+```
+
+Useful filters:
+
+```bash
+MEMBER_DOCUMENT_IDS=abc,def APPLY=true node scripts/migrate-contact-auths-to-auth-manager.mjs
+ORGANIZATIONS=brooks-brothers APPLY=true node scripts/migrate-contact-auths-to-auth-manager.mjs
+```
+
+The script does not clear legacy `auths` by default. Use `CLEAR_LEGACY=true`
+only after the new content type and relation are verified in production.

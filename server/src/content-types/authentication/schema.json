@@ -1,0 +1,55 @@
+{
+  "kind": "collectionType",
+  "collectionName": "auth_manager_authentications",
+  "info": {
+    "singularName": "authentication",
+    "pluralName": "authentications",
+    "displayName": "Authentication",
+    "description": "Authentication provider identities linked to mapped member records"
+  },
+  "pluginOptions": {
+    "content-manager": {
+      "visible": true
+    },
+    "content-type-builder": {
+      "visible": true
+    }
+  },
+  "options": {
+    "draftAndPublish": false,
+    "privateAttributes": ["memberCollection", "memberDocumentId"]
+  },
+  "attributes": {
+    "provider": {
+      "type": "string",
+      "required": true,
+      "default": "supertokens"
+    },
+    "providerUserId": {
+      "type": "string",
+      "required": true
+    },
+    "active": {
+      "type": "boolean",
+      "default": true
+    },
+    "member": {
+      "type": "relation",
+      "relation": "morphToOne"
+    },
+    "memberCollection": {
+      "type": "string",
+      "private": true
+    },
+    "memberDocumentId": {
+      "type": "string",
+      "private": true
+    },
+    "metadata": {
+      "type": "json"
+    },
+    "lastSyncedAt": {
+      "type": "datetime"
+    }
+  }
+}
