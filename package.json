@@ -62,7 +62,7 @@
     "displayName": "Auth Manager",
     "description": "Display and collect authentication data from multi-providers"
   },
-  "name": "auth-manager",
+  "name": "@xbstracts/strapi-plugin-auth-manager",
   "description": "Display and collect authentication data from multi-providers",
   "license": "MIT",
   "repository": {
