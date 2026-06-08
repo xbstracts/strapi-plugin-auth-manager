@@ -11,9 +11,30 @@ in `providerUserId`.
 Organization context is stored in `metadata.organization` instead of a dedicated
 relation field so future providers can reuse the same model.
 
-The mapped member collection should have a relation to Authentication. In this
-workspace, `api::contact.contact` has `authentications` for that relation while
-the legacy `auths` component remains as a compatibility mirror.
+The mapped user content types are configured by the host app:
+
+```ts
+'auth-manager': {
+  enabled: true,
+  resolve: 'src/plugins/strapi-plugin-auth-manager',
+  config: {
+    defaultUserUid: 'api::contact.contact',
+    users: [
+      { uid: 'api::contact.contact', relationField: 'contact' },
+    ],
+  },
+}
+```
+
+`uid` is the Strapi content type UID for an allowed user record. `relationField`
+is optional; when set, it names a relation field on
+`plugin::auth-manager.authentication` that targets the configured user UID. In
+this workspace, the customer extension adds `contact` for that direct relation
+while the legacy `auths` component remains as a compatibility mirror.
+
+New rows use `userCollection` and `userDocumentId` as the canonical private
+reference. `member`, `memberCollection`, and `memberDocumentId` remain as
+deprecated migration fields and are dual-written until the next cleanup version.
 
 ## One-Time Migration
 
@@ -32,9 +53,18 @@ APPLY=true node scripts/migrate-contact-auths-to-auth-manager.mjs
 Useful filters:
 
 ```bash
-MEMBER_DOCUMENT_IDS=abc,def APPLY=true node scripts/migrate-contact-auths-to-auth-manager.mjs
+USER_DOCUMENT_IDS=abc,def APPLY=true node scripts/migrate-contact-auths-to-auth-manager.mjs
 ORGANIZATIONS=brooks-brothers APPLY=true node scripts/migrate-contact-auths-to-auth-manager.mjs
 ```
 
-The script does not clear legacy `auths` by default. Use `CLEAR_LEGACY=true`
+The migration script still accepts the old `MEMBER_*` environment variables as
+aliases. It does not clear legacy `auths` by default. Use `CLEAR_LEGACY=true`
 only after the new content type and relation are verified in production.
+
+To backfill existing auth-manager rows from deprecated `member*` fields into the
+canonical `user*` fields, run:
+
+```bash
+node scripts/migrate-auth-manager-user-fields.mjs
+APPLY=true node scripts/migrate-auth-manager-user-fields.mjs
+```

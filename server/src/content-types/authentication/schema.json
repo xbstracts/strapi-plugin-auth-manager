@@ -5,7 +5,7 @@
     "singularName": "authentication",
     "pluralName": "authentications",
     "displayName": "Authentication",
-    "description": "Authentication provider identities linked to mapped member records"
+    "description": "Authentication provider identities linked to mapped user records"
   },
   "pluginOptions": {
     "content-manager": {
@@ -17,7 +17,13 @@
   },
   "options": {
     "draftAndPublish": false,
-    "privateAttributes": ["memberCollection", "memberDocumentId"]
+    "privateAttributes": [
+      "userCollection",
+      "userDocumentId",
+      "member",
+      "memberCollection",
+      "memberDocumentId"
+    ]
   },
   "attributes": {
     "provider": {
@@ -33,9 +39,22 @@
       "type": "boolean",
       "default": true
     },
-    "member": {
+    "user": {
       "type": "relation",
       "relation": "morphToOne"
+    },
+    "userCollection": {
+      "type": "string",
+      "private": true
+    },
+    "userDocumentId": {
+      "type": "string",
+      "private": true
+    },
+    "member": {
+      "type": "relation",
+      "relation": "morphToOne",
+      "private": true
     },
     "memberCollection": {
       "type": "string",
