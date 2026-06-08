@@ -58,8 +58,16 @@ ORGANIZATIONS=brooks-brothers APPLY=true node scripts/migrate-contact-auths-to-a
 ```
 
 The migration script still accepts the old `MEMBER_*` environment variables as
-aliases. It does not clear legacy `auths` by default. Use `CLEAR_LEGACY=true`
-only after the new content type and relation are verified in production.
+aliases. It re-scans legacy `auths` entries idempotently, creates missing
+Authentication rows, repairs legacy `member*` rows into canonical `user*` fields,
+and attaches compatible orphan Authentication rows by default. Rows already
+linked to another user are reported as conflicts unless
+`ALLOW_CONFLICT_RELINK=true` is explicitly set.
+
+It does not clear legacy `auths` by default. Use `CLEAR_LEGACY=true` only after
+the new content type and relation are verified in production; clearing removes
+only component entries that were successfully migrated and leaves failed,
+filtered, or conflicted entries in place.
 
 To backfill existing auth-manager rows from deprecated `member*` fields into the
 canonical `user*` fields, run:
