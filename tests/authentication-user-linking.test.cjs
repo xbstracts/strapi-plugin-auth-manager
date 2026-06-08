@@ -125,7 +125,7 @@ function createService({ rows = [], users = [{ uid: contactUid, relationField: '
   };
 }
 
-test('ensureAuthenticationForUser dual-writes canonical and legacy user references', async () => {
+test('ensureAuthenticationForUser writes canonical user references', async () => {
   const { calls, rows, service } = createService();
 
   const authentication = await service.ensureAuthenticationForUser({
@@ -138,25 +138,22 @@ test('ensureAuthenticationForUser dual-writes canonical and legacy user referenc
   assert.equal(calls.create.length, 1);
   assert.equal(rows[0].userCollection, contactUid);
   assert.equal(rows[0].userDocumentId, 'contact_doc_1');
-  assert.equal(rows[0].memberCollection, contactUid);
-  assert.equal(rows[0].memberDocumentId, 'contact_doc_1');
   assert.equal(authentication.userDocumentId, 'contact_doc_1');
-  assert.equal(authentication.memberDocumentId, 'contact_doc_1');
   assert.equal(calls.update.length, 1);
   assert.deepEqual(calls.update[0].data.contact, {
     connect: [{ documentId: 'contact_doc_1' }],
   });
 });
 
-test('findUserByAuthentication resolves legacy member fields through user aliases', async () => {
+test('findUserByAuthentication resolves canonical user fields', async () => {
   const { service } = createService({
     rows: [
       {
-        documentId: 'auth_legacy',
+        documentId: 'auth_user',
         provider: 'supertokens',
-        providerUserId: 'st_legacy',
-        memberCollection: contactUid,
-        memberDocumentId: 'legacy_contact_doc',
+        providerUserId: 'st_user',
+        userCollection: contactUid,
+        userDocumentId: 'contact_doc_2',
         metadata: {
           organization: {
             identifier: 'brooks-brothers',
@@ -167,30 +164,13 @@ test('findUserByAuthentication resolves legacy member fields through user aliase
   });
 
   const result = await service.findUserByAuthentication({
-    providerUserId: 'st_legacy',
+    providerUserId: 'st_user',
     userCollectionUid: contactUid,
     organizationIdentifier: 'brooks-brothers',
   });
 
   assert.equal(result.userCollectionUid, contactUid);
-  assert.equal(result.userDocumentId, 'legacy_contact_doc');
-  assert.equal(result.memberCollectionUid, contactUid);
-  assert.equal(result.memberDocumentId, 'legacy_contact_doc');
-});
-
-test('legacy member wrapper writes the new user fields', async () => {
-  const { rows, service } = createService();
-
-  await service.ensureAuthenticationForMember({
-    providerUserId: 'st_member_wrapper',
-    memberCollectionUid: contactUid,
-    memberDocumentId: 'wrapped_contact_doc',
-  });
-
-  assert.equal(rows[0].userCollection, contactUid);
-  assert.equal(rows[0].userDocumentId, 'wrapped_contact_doc');
-  assert.equal(rows[0].memberCollection, contactUid);
-  assert.equal(rows[0].memberDocumentId, 'wrapped_contact_doc');
+  assert.equal(result.userDocumentId, 'contact_doc_2');
 });
 
 test('direct relation sync only runs when relationField is configured', async () => {

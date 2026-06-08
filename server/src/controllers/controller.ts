@@ -33,13 +33,10 @@ const controller = ({ strapi }: { strapi: Core.Strapi }) => ({
     const providerUserId = body.providerUserId || body.ssoUserId;
     const userCollectionUid = firstString(
       body.userCollectionUid,
-      body.userCollection,
-      body.memberCollectionUid,
-      body.memberCollection
+      body.userCollection
     );
     const userDocumentId = firstString(
       body.userDocumentId,
-      body.memberDocumentId,
       body.documentId
     );
 
@@ -47,7 +44,7 @@ const controller = ({ strapi }: { strapi: Core.Strapi }) => ({
       return ctx.badRequest('providerUserId is required');
     }
     if (!userDocumentId) {
-      return ctx.badRequest('userDocumentId, memberDocumentId, or documentId is required');
+      return ctx.badRequest('userDocumentId or documentId is required');
     }
 
     let authentication;
@@ -98,9 +95,7 @@ const controller = ({ strapi }: { strapi: Core.Strapi }) => ({
               : null,
           userCollectionUid: firstString(
             ctx.query.userCollectionUid,
-            ctx.query.userCollection,
-            ctx.query.memberCollectionUid,
-            ctx.query.memberCollection
+            ctx.query.userCollection
           ),
         });
     } catch (error: any) {

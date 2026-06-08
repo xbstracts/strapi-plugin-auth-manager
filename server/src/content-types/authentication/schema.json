@@ -19,15 +19,15 @@
     "draftAndPublish": false,
     "privateAttributes": [
       "userCollection",
-      "userDocumentId",
-      "member",
-      "memberCollection",
-      "memberDocumentId"
+      "userDocumentId"
     ]
   },
   "attributes": {
     "provider": {
-      "type": "string",
+      "type": "enumeration",
+      "enum": [
+        "supertokens"
+      ],
       "required": true,
       "default": "supertokens"
     },
@@ -48,19 +48,6 @@
       "private": true
     },
     "userDocumentId": {
-      "type": "string",
-      "private": true
-    },
-    "member": {
-      "type": "relation",
-      "relation": "morphToOne",
-      "private": true
-    },
-    "memberCollection": {
-      "type": "string",
-      "private": true
-    },
-    "memberDocumentId": {
       "type": "string",
       "private": true
     },

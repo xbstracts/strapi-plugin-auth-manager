@@ -27,8 +27,6 @@ export interface AuthenticationEntry {
   active?: boolean;
   userCollection?: string;
   userDocumentId?: string;
-  memberCollection?: string;
-  memberDocumentId?: string;
   metadata?: Record<string, any> | null;
   lastSyncedAt?: string;
 }
@@ -38,9 +36,6 @@ export interface EnsureAuthenticationParams {
   providerUserId: string;
   userCollectionUid?: string | null;
   userDocumentId?: string | null;
-  memberCollectionUid?: string | null;
-  memberDocumentId?: string | null;
-  memberEntry?: any;
   organizationIdentifier?: string | null;
   organizationDocumentId?: string | null;
   metadata?: Record<string, any> | null;
@@ -52,15 +47,12 @@ export interface FindAuthenticationParams {
   organizationIdentifier?: string | null;
   organizationDocumentId?: string | null;
   userCollectionUid?: string | null;
-  memberCollectionUid?: string | null;
 }
 
 export interface AuthenticationUserReference {
   authentication: AuthenticationEntry;
   userCollectionUid: string;
   userDocumentId: string;
-  memberCollectionUid: string;
-  memberDocumentId: string;
 }
 
 function cleanString(value?: string | null) {
@@ -122,11 +114,8 @@ function validateUserCollectionUid(strapi: Core.Strapi, userCollectionUid: strin
 
 function resolveUserReference(strapi: Core.Strapi, params: EnsureAuthenticationParams) {
   const userCollectionUid =
-    cleanString(params.userCollectionUid) ||
-    cleanString(params.memberCollectionUid) ||
-    getDefaultUserUid(strapi);
-  const userDocumentId =
-    cleanString(params.userDocumentId) || cleanString(params.memberDocumentId);
+    cleanString(params.userCollectionUid) || getDefaultUserUid(strapi);
+  const userDocumentId = cleanString(params.userDocumentId);
 
   if (!userCollectionUid) {
     throw new Error('userCollectionUid is required');
@@ -144,10 +133,7 @@ function resolveUserReference(strapi: Core.Strapi, params: EnsureAuthenticationP
 }
 
 function resolveOptionalUserCollectionUid(strapi: Core.Strapi, params: FindAuthenticationParams) {
-  const userCollectionUid =
-    cleanString(params.userCollectionUid) ||
-    cleanString(params.memberCollectionUid) ||
-    getDefaultUserUid(strapi);
+  const userCollectionUid = cleanString(params.userCollectionUid) || getDefaultUserUid(strapi);
 
   if (userCollectionUid) {
     validateUserCollectionUid(strapi, userCollectionUid);
@@ -166,21 +152,14 @@ function normalizeAuthentication(entry: any): AuthenticationEntry | null {
 
   if (!source.providerUserId) return null;
 
-  const userCollection = source.userCollection || source.memberCollection || undefined;
-  const userDocumentId = source.userDocumentId || source.memberDocumentId || undefined;
-  const memberCollection = source.memberCollection || userCollection || undefined;
-  const memberDocumentId = source.memberDocumentId || userDocumentId || undefined;
-
   return {
     id: source.id,
     documentId: source.documentId,
     provider: normalizeProvider(source.provider),
     providerUserId: source.providerUserId,
     active: source.active,
-    userCollection,
-    userDocumentId,
-    memberCollection,
-    memberDocumentId,
+    userCollection: source.userCollection || undefined,
+    userDocumentId: source.userDocumentId || undefined,
     metadata: source.metadata || null,
     lastSyncedAt: source.lastSyncedAt,
   };
@@ -242,27 +221,19 @@ function buildUserReferenceData(userCollectionUid: string, userDocumentId: strin
   return {
     userCollection: userCollectionUid,
     userDocumentId,
-    memberCollection: userCollectionUid,
-    memberDocumentId: userDocumentId,
   };
 }
 
 function buildUserReferenceFilter(userCollectionUid: string, userDocumentId?: string | null) {
-  const userFilter: Record<string, any> = {
+  const filter: Record<string, any> = {
     userCollection: userCollectionUid,
-  };
-  const memberFilter: Record<string, any> = {
-    memberCollection: userCollectionUid,
   };
 
   if (userDocumentId) {
-    userFilter.userDocumentId = userDocumentId;
-    memberFilter.memberDocumentId = userDocumentId;
+    filter.userDocumentId = userDocumentId;
   }
 
-  return {
-    $or: [userFilter, memberFilter],
-  };
+  return filter;
 }
 
 export function findUserAuthenticationRelationField(
@@ -287,14 +258,6 @@ export function findUserAuthenticationRelationField(
   );
 
   return null;
-}
-
-export function findMemberAuthenticationRelationFields(
-  strapi: Core.Strapi,
-  memberCollectionUid: string
-): AuthenticationRelationField[] {
-  const relationField = findUserAuthenticationRelationField(strapi, memberCollectionUid);
-  return relationField ? [relationField] : [];
 }
 
 async function fetchAuthenticationsByUserMetadata(
@@ -460,16 +423,14 @@ async function findUserByAuthentication(strapi: Core.Strapi, params: FindAuthent
     )
   );
 
-  const resolvedUserCollection = authentication?.userCollection || authentication?.memberCollection;
-  const resolvedUserDocumentId = authentication?.userDocumentId || authentication?.memberDocumentId;
+  const resolvedUserCollection = authentication?.userCollection;
+  const resolvedUserDocumentId = authentication?.userDocumentId;
   if (!authentication || !resolvedUserCollection || !resolvedUserDocumentId) return null;
 
   return {
     authentication,
     userCollectionUid: resolvedUserCollection,
     userDocumentId: resolvedUserDocumentId,
-    memberCollectionUid: resolvedUserCollection,
-    memberDocumentId: resolvedUserDocumentId,
   } satisfies AuthenticationUserReference;
 }
 
@@ -487,25 +448,14 @@ function toLegacyAuthEntry(authentication: AuthenticationEntry) {
 export default ({ strapi }: { strapi: Core.Strapi }) => ({
   findUserAuthenticationRelationField: (userCollectionUid: string) =>
     findUserAuthenticationRelationField(strapi, userCollectionUid),
-  findMemberAuthenticationRelationFields: (memberCollectionUid: string) =>
-    findMemberAuthenticationRelationFields(strapi, memberCollectionUid),
   ensureAuthenticationForUser: (params: EnsureAuthenticationParams) =>
-    ensureAuthenticationForUser(strapi, params),
-  ensureAuthenticationForMember: (params: EnsureAuthenticationParams) =>
     ensureAuthenticationForUser(strapi, params),
   getAuthenticationsForUser: (
     userCollectionUid: string,
     userDocumentId: string,
     userEntry?: any
   ) => getAuthenticationsForUser(strapi, userCollectionUid, userDocumentId, userEntry),
-  getAuthenticationsForMember: (
-    memberCollectionUid: string,
-    memberDocumentId: string,
-    memberEntry?: any
-  ) => getAuthenticationsForUser(strapi, memberCollectionUid, memberDocumentId, memberEntry),
   findUserByAuthentication: (params: FindAuthenticationParams) =>
-    findUserByAuthentication(strapi, params),
-  findMemberByAuthentication: (params: FindAuthenticationParams) =>
     findUserByAuthentication(strapi, params),
   toLegacyAuthEntry,
 });
