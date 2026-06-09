@@ -29,41 +29,14 @@ The mapped user content types are configured by the host app:
 `uid` is the Strapi content type UID for an allowed user record. `relationField`
 is optional; when set, it names a relation field on
 `plugin::auth-manager.authentication` that targets the configured user UID. In
-this workspace, the customer extension adds `contact` for that direct relation
-while the legacy `auths` component remains as a compatibility mirror.
+this workspace, the customer extension adds `contact` for that direct relation.
 
 Rows use `userCollection` and `userDocumentId` as the canonical private
 reference.
 
-## One-Time Migration
+## Contact Sync
 
-Dry run:
-
-```bash
-node scripts/migrate-contact-auths-to-auth-manager.mjs
-```
-
-Apply:
-
-```bash
-APPLY=true node scripts/migrate-contact-auths-to-auth-manager.mjs
-```
-
-Useful filters:
-
-```bash
-USER_DOCUMENT_IDS=abc,def APPLY=true node scripts/migrate-contact-auths-to-auth-manager.mjs
-ORGANIZATIONS=brooks-brothers APPLY=true node scripts/migrate-contact-auths-to-auth-manager.mjs
-```
-
-The migration script still accepts the old `MEMBER_*` environment variables as
-aliases. It re-scans legacy `auths` entries idempotently, creates missing
-Authentication rows, repairs configured user relations, and attaches compatible
-orphan Authentication rows by default. Rows already linked to another user are
-reported as conflicts unless
-`ALLOW_CONFLICT_RELINK=true` is explicitly set.
-
-It does not clear legacy `auths` by default. Use `CLEAR_LEGACY=true` only after
-the new content type and relation are verified in production; clearing removes
-only component entries that were successfully migrated and leaves failed,
-filtered, or conflicted entries in place.
+Host applications should create and repair Authentication rows through the
+plugin service or through their own integration endpoint. This workspace uses
+`POST /api/contacts/sync-auth` and `POST /api/contacts/sync-provider` to sync
+SuperTokens IDs into auth-manager rows linked to Contact.

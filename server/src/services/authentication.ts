@@ -434,7 +434,7 @@ async function findUserByAuthentication(strapi: Core.Strapi, params: FindAuthent
   } satisfies AuthenticationUserReference;
 }
 
-function toLegacyAuthEntry(authentication: AuthenticationEntry) {
+function toAuthEntry(authentication: AuthenticationEntry) {
   const organization = getMetadataOrganization(authentication.metadata);
 
   return {
@@ -457,5 +457,5 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
   ) => getAuthenticationsForUser(strapi, userCollectionUid, userDocumentId, userEntry),
   findUserByAuthentication: (params: FindAuthenticationParams) =>
     findUserByAuthentication(strapi, params),
-  toLegacyAuthEntry,
+  toAuthEntry,
 });
